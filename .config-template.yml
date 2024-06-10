@@ -1,6 +1,5 @@
 # .config.yml
 gitlab:
-  username: <username>
-  password: <pass>
-  url: <url>
-  token: <token>
+  namespace: <namespace-id>
+  url: <url-gitlab>
+  token: <gitlab-token>
