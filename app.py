@@ -6,6 +6,8 @@ from arctrl.arc import ARC
 from arctrl.Contract.contract import Contract, DTO
 from fsspreadsheet.xlsx import Xlsx
 from pathlib import Path
+import json
+import re
 
 
 
@@ -69,22 +71,30 @@ def create_gitlab_repo_arc(config, repo_name):
     project = gl.projects.create(project_params)
     print(f'Repository created: {project.web_url}')
 
+    return project.path_with_namespace
+
 
 def main():
-    project_folder_path = os.path.dirname(os.path.abspath(__file__))
-    repo_name = 'my-arc-1'
-    repo_path = f'{project_folder_path}/output/{repo_name}'
-    remote_url = f'http://dmz-web-140:22223/root/{repo_name}.git'
-    config = read_config('.config.yml')
+    data_path = "data/edal.json"
+    with open(data_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+        for i, item in enumerate(data[:10]):
+            project_folder_path = os.path.dirname(os.path.abspath(__file__))
+            arc_name = re.sub(r'[^\w.+ -]', ' ', item['name']) 
+            print(f"Project {i+1}: {arc_name}")
 
-    # Create gitlab repo
-    create_gitlab_repo_arc(config, repo_name)
-    # Create local repo and fetch origin
-    create_repo_and_fetch_origin(repo_path, remote_url)
-    # Init ARC
-    init_arc(repo_name)
-    # Add and push changes
-    add_and_push_changes(repo_path, 'Initial commit')
+            config = read_config('.config.yml')
+
+            # Create gitlab repo
+            repo_path_namespace = create_gitlab_repo_arc(config, arc_name)
+            repo_path = f'{project_folder_path}/output/{repo_path_namespace}'
+            remote_url = f'http://dmz-web-140:22223/{repo_path_namespace}.git'
+            # Create local repo and fetch origin
+            create_repo_and_fetch_origin(repo_path, remote_url)
+            # Init ARC
+            init_arc(repo_path_namespace)
+            # Add and push changes
+            add_and_push_changes(repo_path, 'Initial commit')
 
 
 def init_arc(arc_name='my-arc'):
@@ -149,8 +159,7 @@ def delete_all_projects():
 
 
 if __name__ == '__main__':
-    # delete_all_projects()
+    #delete_all_projects()
     main()
     # delete_project([9,11])
-
     # init_arc()
