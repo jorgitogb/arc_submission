@@ -11,6 +11,7 @@ import re
 
 
 
+
 def read_config(file_path):
     with open(file_path, 'r') as file:
         config = yaml.safe_load(file)
@@ -78,9 +79,9 @@ def main():
     data_path = "data/edal.json"
     with open(data_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
-        for i, item in enumerate(data[:10]):
+        for i, item in enumerate(data[:5]):
             project_folder_path = os.path.dirname(os.path.abspath(__file__))
-            arc_name = re.sub(r'[^\w.+ -]', ' ', item['name']) 
+            arc_name = re.sub(r'[^\w.+ -]', ' ', item['name'])
             print(f"Project {i+1}: {arc_name}")
 
             config = read_config('.config.yml')
@@ -162,4 +163,4 @@ if __name__ == '__main__':
     #delete_all_projects()
     main()
     # delete_project([9,11])
-    # init_arc()
+
