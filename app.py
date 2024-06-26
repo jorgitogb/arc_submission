@@ -1,24 +1,41 @@
+import json
+import os
+import re
+from pathlib import Path
+
 import gitlab
 import yaml
-from git import Repo
-import os
 from arctrl.arc import ARC
-from arctrl.Contract.contract import Contract, DTO
+from arctrl.Contract.contract import Contract
 from fsspreadsheet.xlsx import Xlsx
-from pathlib import Path
-import json
-import re
-
-
+from git import Repo
 
 
 def read_config(file_path):
-    with open(file_path, 'r') as file:
+    """
+    Reads the contents of a YAML file and returns the configuration.
+
+    Args:
+        file_path (str): The path to the YAML file.
+
+    Returns:
+        dict: The configuration loaded from the YAML file.
+    """
+    with open(file_path, 'r', encoding='utf-8') as file:
         config = yaml.safe_load(file)
     return config
 
 
 def create_repo_and_fetch_origin(repo_path, remote_url):
+    """
+    Initializes a new Git repository at the specified `repo_path` and fetches the remote origin at the given `remote_url`.
+
+    :param repo_path: A string representing the path to the directory where the repository will be created.
+    :type repo_path: str
+    :param remote_url: A string representing the URL of the remote repository to fetch from.
+    :type remote_url: str
+    :return: None
+    """
     # Initialize a new Git repository
     repo = Repo.init(repo_path, initial_branch='main')
 
@@ -35,6 +52,18 @@ def create_repo_and_fetch_origin(repo_path, remote_url):
 
 
 def add_and_push_changes(repo_path, commit_message):
+    """
+    Adds and pushes changes to a local Git repository.
+
+    Args:
+        repo_path (str): The path to the local Git repository.
+        commit_message (str): The message to use for the commit.
+
+    Returns:
+        None
+
+    This function opens the local Git repository specified by `repo_path`, stages all changes, commits the changes with the provided commit message, and pushes the changes to the remote origin. It then prints a success message.
+    """
     # Open the local Git repository
     repo = Repo(repo_path)
 
@@ -52,6 +81,15 @@ def add_and_push_changes(repo_path, commit_message):
 
 
 def create_gitlab_repo_arc(config, repo_name):
+    """
+    Create a GitLab repository based on the provided configuration and repository name.
+
+    :param config: A dictionary containing GitLab configuration details.
+    :type config: dict
+    :param repo_name: A string representing the name of the repository to be created.
+    :type repo_name: str
+    :return: A string representing the path of the created project with namespace.
+    """
     gl = gitlab.Gitlab(config['gitlab']['url'],
                        private_token=config['gitlab']['private_token'])
 
@@ -76,6 +114,16 @@ def create_gitlab_repo_arc(config, repo_name):
 
 
 def main():
+    """
+    This function reads data from a JSON file, creates GitLab repositories, initializes local Git repositories,
+    fetches the remote origin, initializes ARC, and adds and pushes changes.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     data_path = "data/edal.json"
     with open(data_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
@@ -99,6 +147,15 @@ def main():
 
 
 def init_arc(arc_name='my-arc'):
+    """
+    Initializes an ARC with the given name.
+
+    Args:
+        arc_name (str, optional): The name of the ARC. Defaults to 'my-arc'.
+
+    Returns:
+        None
+    """
     arc = ARC()
     arc_root_path = f'output/{arc_name}'
     contracts = arc.GetWriteContracts()
@@ -107,6 +164,16 @@ def init_arc(arc_name='my-arc'):
 
 
 def fulfill_write_contract(basePath: str, contract: Contract):
+    """
+    A function that fulfills a write contract based on the provided base path and contract.
+
+    Args:
+        basePath (str): The base path where the contract will be fulfilled.
+        contract (Contract): The contract object containing information to fulfill.
+
+    Returns:
+        None
+    """
     def ensure_directory(filePath: Path):
         if filePath.suffix or filePath.name.startswith("."):
             filePath = filePath.parent
@@ -125,7 +192,7 @@ def fulfill_write_contract(basePath: str, contract: Contract):
 
     p = Path(basePath).joinpath(contract.Path)
     if contract.Operation == "CREATE":
-        if contract.DTO == None:
+        if contract.DTO is None:
             ensure_directory(p)
             Path.write_text(p, "")
         elif contract.DTOType.name == "ISA_Assay" or contract.DTOType.name == "ISA_Study" or contract.DTOType.name == "ISA_Investigation":
@@ -140,6 +207,23 @@ def fulfill_write_contract(basePath: str, contract: Contract):
 
 
 def delete_project(projects_id):
+    """
+    Deletes GitLab projects based on the provided project IDs.
+
+    Args:
+        projects_id (list): A list of integers representing the IDs of the projects to be deleted.
+
+    Returns:
+        None
+
+    This function reads the configuration file '.config.yml' to retrieve the GitLab URL and private token.
+    It then creates a GitLab instance using the provided URL and private token.
+    It iterates over the list of project IDs and deletes each project using the GitLab instance.
+    It prints a message indicating the ID of the removed project.
+
+    Example usage:
+        delete_project([1, 2, 3])
+    """
     config = read_config('.config.yml')
     gl = gitlab.Gitlab(config['gitlab']['url'],
                        private_token=config['gitlab']['private_token'])
@@ -150,6 +234,18 @@ def delete_project(projects_id):
 
 
 def delete_all_projects():
+    """
+    Deletes all projects from the GitLab instance specified in the configuration file.
+
+    This function reads the configuration file '.config.yml' to retrieve the GitLab URL and private token.
+    It then creates a GitLab instance using the provided URL and private token.
+    It retrieves a list of all projects from the GitLab instance.
+    For each project in the list, it deletes the project and prints a message indicating the ID of the removed project.
+
+    This function does not take any parameters.
+
+    This function does not return any value.
+    """
     config = read_config('.config.yml')
     gl = gitlab.Gitlab(config['gitlab']['url'],
                        private_token=config['gitlab']['private_token'])
@@ -163,4 +259,3 @@ if __name__ == '__main__':
     #delete_all_projects()
     main()
     # delete_project([9,11])
-

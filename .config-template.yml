@@ -1,5 +1,5 @@
 # .config.yml
 gitlab:
-  namespace: <namespace-id>
+  namespace_id: <namespace-id>
   url: <url-gitlab>
-  token: <gitlab-token>
+  private_token: <gitlab-token>
