@@ -1,19 +1,16 @@
-from pyld import jsonld
-from arctrl.arctrl import JsonController
 import json
+from pyld import jsonld
 
 
 def main():
-    with open('/data/edal.json', 'r') as f:
-        dataset = json.loads(f.read())
+    with open('data/edal.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
 
-    with open('context/data_context.json', 'r') as f:
-        context = json.loads(f.read())
-
-    expanded = jsonld.expand(dataset)
-    compacted = jsonld.compact(expanded, context)
-
-    arc = JsonController.Investigation().from_json_string(compacted)
+    # Assuming the JSON-LD document is the first element of the data list
+    dataset = data[0]['author'][0]
+    #print(dataset)
+    expanded = jsonld.expand(dataset, False)
+    print(json.dumps(expanded, indent=2))
 
 
 if __name__ == '__main__':
